@@ -11,7 +11,7 @@ class UsuariosController extends Controller {
      * Display a listing of the resource.
      */
     public function index(){
-        $users = Usuarios::all();
+        $users = Usuarios::paginate(5);
 
         return response()->json($users);
     }
@@ -67,13 +67,6 @@ class UsuariosController extends Controller {
         return response()->json($user);
     }
 
-    /*AUTENTICACION*/
-
-    public function auth()
-    {
-        
-    }
-
     /**
      * Update the specified resource in storage.
      */
@@ -94,7 +87,7 @@ class UsuariosController extends Controller {
             'num_documento'  => 'sometimes|string|max:20',
             'telefono'  => 'sometimes|string|max:20',
             'direccion'  => 'sometimes|string|max:255',
-            'correo' => 'sometimes|email|unique:usuarios,email',
+            'correo' => 'sometimes|email|unique:usuarios,correo',
             'contrasena' => 'sometimes|min:6'
         ]);
 
@@ -107,7 +100,7 @@ class UsuariosController extends Controller {
         if (isset($validated['correo']))     $user->correo = $validated['correo'];
         if (isset($validated['contrasena'])) $user->contrasena = bcrypt($validated['contrasena']);
 
-        $user->save();
+        $user->update();
 
         return response()->json([
             'message' => 'Usuario actualizado correctamente',

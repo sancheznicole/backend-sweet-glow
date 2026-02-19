@@ -12,10 +12,9 @@ class RolesController extends Controller
      */
     public function index()
     {
-        $roles = Roles::all();
+        $roles = Roles::paginate(5);
 
         return response()->json($roles);
-
     }
 
     /**
@@ -33,7 +32,7 @@ class RolesController extends Controller
 
         return response()->json([
             'message' => 'Rol creado correctamente',
-            'data' => $user
+            'data' => $rol
         ], 201);
     } 
 
@@ -63,7 +62,7 @@ class RolesController extends Controller
         if (!$rol) {
             return response()->json([
                 'message' => 'Rol no encontrado'
-            ]);
+            ], 404);
         }
 
         $validated = $request->validate([
@@ -72,11 +71,11 @@ class RolesController extends Controller
 
         if (isset($validated['nombre']))     $rol->nombre = $validated['nombre'];
 
-        $rol->save();
+        $rol->update();
 
         return response()->json([
             'message' => 'Rol actualizado correctamente',
-            'data' => $user
+            'data' => $rol
         ], 200);
     }
 
