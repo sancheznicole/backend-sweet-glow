@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Roles;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -68,4 +69,6 @@ class Usuarios extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Roles::class, 'id_rol', 'id_rol');
     }
+
+    
 }
