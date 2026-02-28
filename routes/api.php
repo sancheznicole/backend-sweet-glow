@@ -1,6 +1,9 @@
 <?php
-use App\Http\Controllers\AuthController;
+
 use Illuminate\Support\Facades\Route;
+
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ImagenesController;
 
 Route::group([
     'middleware' => 'api',
@@ -22,8 +25,13 @@ Route::apiResource('categories', App\Http\Controllers\CategoriasController::clas
 
 Route::apiResource('brands', App\Http\Controllers\MarcasController::class);
 
-Route::apiResource('Product_references', App\Http\Controllers\ReferenciaProductosController::class);
+Route::apiResource('product_references', App\Http\Controllers\ReferenciaProductosController::class);
 
+Route::apiResource('gift_guide', App\Http\Controllers\GuiaRegalosController::class);
+
+Route::apiResource('products', App\Http\Controllers\ProductosController::class);
+
+Route::apiResource('images', App\Http\Controllers\ImagenesController::class);
 
 
 

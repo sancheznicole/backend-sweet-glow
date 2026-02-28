@@ -77,7 +77,7 @@ class UsuariosController extends Controller {
         if (!$user) {
             return response()->json([
                 'message' => 'Usuario no encontrado'
-            ]);
+            ], 404);
         }
 
         $validated = $request->validate([
@@ -126,6 +126,5 @@ class UsuariosController extends Controller {
         return response()->json([
             'message' => 'Usuario eliminado correctamente'
         ], 200);
-
     }
 }
