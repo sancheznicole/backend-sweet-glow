@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('id_referencia');
             $table->string('codigo')->nullable(false);
             $table->string('color')->nullable(false);
-            $table->string('tamaño')->nullable(false);
+            $table->string('tamano')->nullable(false);
             $table->timestamps();
         });
     }

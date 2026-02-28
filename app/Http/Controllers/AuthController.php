@@ -23,7 +23,7 @@ class AuthController extends Controller
             'num_documento'  => 'required|string|max:20',
             'telefono'  => 'required|string|max:20',
             'direccion'  => 'required|string|max:255',
-            'id_rol'  => 'required|integer|max:2',
+            'id_rol'  => 'required|integer',
             'correo' => 'required|email|unique:usuarios',
             'contrasena' => 'required|min:6',
         ]);
@@ -31,7 +31,7 @@ class AuthController extends Controller
        if ($validator->fails()) {
             return response()->json([
             'errors' => $validator->errors()
-            ], 422);
+            ], 200);
         }
   
         $user = new Usuarios();
