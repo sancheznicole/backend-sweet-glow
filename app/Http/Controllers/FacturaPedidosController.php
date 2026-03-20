@@ -10,11 +10,18 @@ class FacturaPedidosController extends Controller {
     /**
      * Display a listing of the resource.
      */
-    public function index(){
-        $facturaPedidos = FacturaPedidos::paginate(5);
+    public function index(Request $request)
+{
+    $query = FacturaPedidos::query();
 
-        return response()->json($facturaPedidos);
+    if ($request->has('id_usuario')) {
+        $query->where('id_usuario', $request->query('id_usuario'));
     }
+
+    $facturas = $query->get();
+
+    return response()->json($facturas, 200);
+}
 
     /**
      * Store a newly created resource in storage.

@@ -7,11 +7,23 @@ use Illuminate\Http\Request;
 
 class InscripcionesRegaloController extends Controller
 {
-    public function index()
-    {
-        return InscripcionRegalo::with(['usuario','factura'])->get();
-    }
+public function index(Request $request)
+{
+    $limit = $request->query('limit', 10);
+    $limit = min(max(1, (int)$limit), 100);
 
+    $inscripciones = InscripcionRegalo::with(['usuario', 'factura'])
+        ->paginate($limit);
+
+    return response()->json([
+        'valid'        => true,
+        'data'         => $inscripciones->items(),
+        'current_page' => $inscripciones->currentPage(),
+        'last_page'    => $inscripciones->lastPage(),
+        'per_page'     => $inscripciones->perPage(),
+        'total'        => $inscripciones->total()
+    ]);
+}
     public function store(Request $request)
     {
         $request->validate([

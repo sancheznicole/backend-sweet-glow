@@ -8,28 +8,28 @@ use Illuminate\Http\Request;
 class ResenasController extends Controller
 {
     // LISTAR RESEÑAS CON PAGINACIÓN
-    public function index(Request $request)
-    {
-        $perPage = $request->query('limit', 10);
-        $perPage = min(max(1, (int)$perPage), 100);
+public function index(Request $request)
+{
+    $perPage = $request->query('limit', 10);
+    $perPage = min(max(1, (int)$perPage), 100);
 
-        $resenas = Resena::with([
-                'producto.categoria',   // carga producto Y su categoría
-                'producto.marca',       // carga producto Y su marca
-                'usuario'
-            ])
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+    $resenas = Resena::with([
+            'producto.categoria',
+            'producto.marca',
+            'usuario'
+        ])
+        ->orderBy('created_at', 'desc')
+        ->paginate($perPage);  // ← aquí el cambio
 
-        return response()->json([
-            'valid'        => true,
-            'resenas'      => $resenas->items(),
-            'current_page' => $resenas->currentPage(),
-            'last_page'    => $resenas->lastPage(),
-            'per_page'     => $resenas->perPage(),
-            'total'        => $resenas->total()
-        ]);
-    }
+    return response()->json([
+        'valid'        => true,
+        'resenas'      => $resenas->items(),
+        'current_page' => $resenas->currentPage(),
+        'last_page'    => $resenas->lastPage(),
+        'per_page'     => $resenas->perPage(),
+        'total'        => $resenas->total()
+    ]);
+}
 
     // CREAR RESEÑA
     public function store(Request $request)

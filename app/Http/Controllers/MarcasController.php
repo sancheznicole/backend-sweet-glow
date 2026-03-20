@@ -9,9 +9,10 @@ use Illuminate\Validation\Rule;
 class MarcasController extends Controller
 {
     // Listar todas
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Marcas::all(), 200);
+        $limit = $request->query('limit', 10);
+        return response()->json(Marcas::paginate($limit), 200);
     }
 
     // Crear
@@ -36,9 +37,7 @@ class MarcasController extends Controller
         $marca = Marcas::find($id);
 
         if (!$marca) {
-            return response()->json([
-                'message' => 'Marca no encontrada'
-            ], 404);
+            return response()->json(['message' => 'Marca no encontrada'], 404);
         }
 
         return response()->json($marca, 200);
@@ -50,9 +49,7 @@ class MarcasController extends Controller
         $marca = Marcas::find($id);
 
         if (!$marca) {
-            return response()->json([
-                'message' => 'Marca no encontrada'
-            ], 404);
+            return response()->json(['message' => 'Marca no encontrada'], 404);
         }
 
         $validated = $request->validate([
@@ -80,15 +77,11 @@ class MarcasController extends Controller
         $marca = Marcas::find($id);
 
         if (!$marca) {
-            return response()->json([
-                'message' => 'Marca no encontrada'
-            ], 404);
+            return response()->json(['message' => 'Marca no encontrada'], 404);
         }
 
         $marca->delete();
 
-        return response()->json([
-            'message' => 'Marca eliminada correctamente'
-        ], 200);
+        return response()->json(['message' => 'Marca eliminada correctamente'], 200);
     }
 }

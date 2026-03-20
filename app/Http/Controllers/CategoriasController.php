@@ -8,10 +8,11 @@ use Illuminate\Validation\Rule;
 
 class CategoriasController extends Controller
 {
-   // Listar todas las categorías
-    public function index()
+    // Listar todas las categorías
+    public function index(Request $request)
     {
-        $categorias = Categorias::all();
+        $limit = $request->query('limit', 10);
+        $categorias = Categorias::paginate($limit);
         return response()->json($categorias, 200);
     }
 
@@ -36,9 +37,7 @@ class CategoriasController extends Controller
         $categoria = Categorias::find($id);
 
         if (!$categoria) {
-            return response()->json([
-                'message' => 'Categoría no encontrada'
-            ], 404);
+            return response()->json(['message' => 'Categoría no encontrada'], 404);
         }
 
         return response()->json($categoria, 200);
@@ -50,9 +49,7 @@ class CategoriasController extends Controller
         $categoria = Categorias::find($id);
 
         if (!$categoria) {
-            return response()->json([
-                'message' => 'Categoría no encontrada'
-            ], 404);
+            return response()->json(['message' => 'Categoría no encontrada'], 404);
         }
 
         $validated = $request->validate([
@@ -79,15 +76,11 @@ class CategoriasController extends Controller
         $categoria = Categorias::find($id);
 
         if (!$categoria) {
-            return response()->json([
-                'message' => 'Categoría no encontrada'
-            ], 404);
+            return response()->json(['message' => 'Categoría no encontrada'], 404);
         }
 
         $categoria->delete();
 
-        return response()->json([
-            'message' => 'Categoría eliminada correctamente'
-        ], 200);
+        return response()->json(['message' => 'Categoría eliminada correctamente'], 200);
     }
 }
