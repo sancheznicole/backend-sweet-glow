@@ -7,9 +7,16 @@ use Illuminate\Http\Request;
 
 class ReferenciaProductosController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $referencias = ReferenciaProductos::paginate(5);
+        $search = $request->search;
+
+        $referencias = ReferenciaProductos::when($search, function ($query, $search) {
+            $query->where('color', 'like', "%{$search}%")
+                  ->orWhere('tamano', 'like', "%{$search}%")
+                  ->orWhere('codigo', 'like', "%{$search}%")
+                  ->orWhere('id_referencia', 'like', "%{$search}%");
+        })->paginate(5);
         return response()->json($referencias);
     }
 
@@ -82,4 +89,6 @@ class ReferenciaProductosController extends Controller
             'message' => 'Referencia eliminada correctamente'
         ], 200);
     }
+
+
 }

@@ -7,6 +7,26 @@ use Illuminate\Http\Request;
 
 class ProductosController extends Controller {
     
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request){
+        $search = $request->search;
+        
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])->when($search, function ($query, $search) {
+            $query->where('nombre', 'like', "%{$search}%")
+                  ->orWhere('descripcion', 'like', "%{$search}%")
+                  ->orWhere('stock', 'like', "%{$search}%")
+                  ->orWhere('precio', 'like', "%{$search}%");
+        })->paginate(5);
+
+        return response()->json($productos);
     public function index(Request $request)
 {
     $search = $request->search;
@@ -99,7 +119,8 @@ class ProductosController extends Controller {
             'categoria',
             'marca',
             'referencia_producto',
-            'guiaRegalo'
+            'guiaRegalo',
+            'imagenes'
         ])->find($id);
 
         if (!$producto) {
