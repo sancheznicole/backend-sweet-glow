@@ -24,7 +24,7 @@ class InscripcionRegalo extends Model
 
     public $timestamps = false;
 
-        protected static function boot()
+    protected static function boot()
     {
         parent::boot();
         static::creating(function ($model) {

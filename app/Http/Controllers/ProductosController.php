@@ -7,30 +7,54 @@ use Illuminate\Http\Request;
 
 class ProductosController extends Controller {
     
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request){
-        $search = $request->search;
-        
-        $productos = Productos::with([
-            'categoria',
-            'marca',
-            'referencia_producto',
-            'guiaRegalo'
-        ])->when($search, function ($query, $search) {
-            $query->where('nombre', 'like', "%{$search}%")
-                  ->orWhere('descripcion', 'like', "%{$search}%")
-                  ->orWhere('stock', 'like', "%{$search}%")
-                  ->orWhere('precio', 'like', "%{$search}%");
-        })->paginate(5);
+    public function index(Request $request)
+{
+    $search = $request->search;
 
-        return response()->json($productos);
+    $query = Productos::with([
+        'categoria',
+        'marca',
+        'imagenes',
+        'referencia_producto',
+        'guiaRegalo'
+    ]);
+
+    // Búsqueda por texto
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('nombre', 'like', "%{$search}%")
+              ->orWhere('descripcion', 'like', "%{$search}%")
+              ->orWhere('stock', 'like', "%{$search}%")
+              ->orWhere('precio', 'like', "%{$search}%");
+        });
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    // Filtros por categoría y marca
+    if ($request->has('id_categoria')) {
+        $query->where('id_categoria', $request->query('id_categoria'));
+    }
+
+    if ($request->has('id_marca')) {
+        $query->where('id_marca', $request->query('id_marca'));
+    }
+
+    // Ordenamiento
+    $orden = $request->query('orden', 'nombre_asc');
+    switch ($orden) {
+        case 'precio_asc':  $query->orderBy('precio', 'asc');  break;
+        case 'precio_desc': $query->orderBy('precio', 'desc'); break;
+        case 'nombre_desc': $query->orderBy('nombre', 'desc'); break;
+        case 'fecha_desc':  $query->orderBy('created_at', 'desc'); break;
+        case 'fecha_asc':   $query->orderBy('created_at', 'asc');  break;
+        default:            $query->orderBy('nombre', 'asc');  break;
+    }
+
+    $limit = $request->query('limit', 5);
+
+    return response()->json($query->paginate($limit));
+}
+
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -69,9 +93,6 @@ class ProductosController extends Controller {
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         $producto = Productos::with([
@@ -90,9 +111,6 @@ class ProductosController extends Controller {
         return response()->json($producto);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         $producto = Productos::find($id);
@@ -118,18 +136,18 @@ class ProductosController extends Controller {
             'id_guia' => 'sometimes|nullable|integer',
         ]);
 
-        if (isset($validated['nombre']))     $producto->nombre = $validated['nombre'];
-        if (isset($validated['descripcion']))     $producto->descripcion = $validated['descripcion'];
-        if (isset($validated['precio']))     $producto->precio = $validated['precio'];
-        if (isset($validated['tendencia']))     $producto->tendencia = $validated['tendencia'];
-        if (isset($validated['descuento']))     $producto->descuento = $validated['descuento'];
-        if (isset($validated['prod_regalo']))     $producto->prod_regalo = $validated['prod_regalo'];
-        if (isset($validated['premio']))     $producto->premio = $validated['premio'];
-        if (isset($validated['stock'])) $producto->stock = $validated['stock'];
+        if (isset($validated['nombre']))       $producto->nombre = $validated['nombre'];
+        if (isset($validated['descripcion']))  $producto->descripcion = $validated['descripcion'];
+        if (isset($validated['precio']))       $producto->precio = $validated['precio'];
+        if (isset($validated['tendencia']))    $producto->tendencia = $validated['tendencia'];
+        if (isset($validated['descuento']))    $producto->descuento = $validated['descuento'];
+        if (isset($validated['prod_regalo'])) $producto->prod_regalo = $validated['prod_regalo'];
+        if (isset($validated['premio']))       $producto->premio = $validated['premio'];
+        if (isset($validated['stock']))        $producto->stock = $validated['stock'];
         if (isset($validated['id_categoria'])) $producto->id_categoria = $validated['id_categoria'];
-        if (isset($validated['id_marca'])) $producto->id_marca = $validated['id_marca'];
+        if (isset($validated['id_marca']))     $producto->id_marca = $validated['id_marca'];
         if (isset($validated['id_referencia'])) $producto->id_referencia = $validated['id_referencia'];
-        if (isset($validated['id_guia'])) $producto->id_guia = $validated['id_guia'];
+        if (isset($validated['id_guia']))      $producto->id_guia = $validated['id_guia'];
 
         $producto->update();
 
@@ -139,9 +157,6 @@ class ProductosController extends Controller {
         ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         $producto = Productos::find($id);
