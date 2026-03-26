@@ -9,15 +9,22 @@ use Carbon\Carbon;
 class TarjetasRegaloController extends Controller
 {
     // 🔹 LISTAR TODAS LAS TARJETAS
-    public function index(Request $request)
-    {
-        $search = $request->search;
+public function index(Request $request)
+{
+    $search = $request->search;
+    $idUsuario = $request->id_usuario; // recibe ?id_usuario=1 desde el frontend
 
-        $tarjetas = TarjetasRegalo::with('usuario')->when($search, function ($query, $search) {
+    $tarjetas = TarjetasRegalo::with('usuario')
+        ->when($search, function ($query, $search) {
             $query->where('id_tarjeta', 'like', "%{$search}%");
-        })->paginate(5);
-        return response()->json($tarjetas);
-    }
+        })
+        ->when($idUsuario, function ($query, $idUsuario) {
+            $query->where('id_usuario', $idUsuario);
+        })
+        ->paginate(100);
+
+    return response()->json($tarjetas);
+}
 
     // 🔹 CREAR TARJETA
     public function store(Request $request)
@@ -29,12 +36,12 @@ class TarjetasRegaloController extends Controller
         ]);
 
         $tarjeta = TarjetasRegalo::create([
-        'monto' => $request->monto,
-        'fecha_expiracion' => $request->fecha_expiracion,
-        'fecha_de_uso' => Carbon::now(),
-        'id_usuario' => $request->id_usuario,
-        'fecha_creacion' => Carbon::now(),
-        'estado' => 'activa',
+            'monto' => $request->monto,
+            'fecha_expiracion' => $request->fecha_expiracion,
+            'fecha_de_uso' => '1000-01-01 00:00:00',  // placeholder, indica "no usada"
+            'id_usuario' => $request->id_usuario,
+            'fecha_creacion' => Carbon::now(),
+            'estado' => 'activa',
         ]);
 
         return response()->json($tarjeta, 201);
