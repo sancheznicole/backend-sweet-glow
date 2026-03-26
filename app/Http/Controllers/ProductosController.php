@@ -17,7 +17,8 @@ class ProductosController extends Controller {
             'categoria',
             'marca',
             'referencia_producto',
-            'guiaRegalo'
+            'guiaRegalo',
+            'imagenes'
         ])->when($search, function ($query, $search) {
             $query->where('nombre', 'like', "%{$search}%")
                   ->orWhere('descripcion', 'like', "%{$search}%")
@@ -78,7 +79,8 @@ class ProductosController extends Controller {
             'categoria',
             'marca',
             'referencia_producto',
-            'guiaRegalo'
+            'guiaRegalo',
+            'imagenes'
         ])->find($id);
 
         if (!$producto) {

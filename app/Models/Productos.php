@@ -46,4 +46,9 @@ class Productos extends Model
     {
         return $this->belongsTo(GuiaRegalos::class, 'id_guia', 'id_guia');
     }
+
+    public function imagenes()
+    {
+        return $this->hasMany(Imagenes::class, 'id_producto', 'id_producto');
+    }
 }
