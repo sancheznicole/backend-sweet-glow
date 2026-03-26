@@ -27,52 +27,7 @@ class ProductosController extends Controller {
         })->paginate(5);
 
         return response()->json($productos);
-    public function index(Request $request)
-{
-    $search = $request->search;
-
-    $query = Productos::with([
-        'categoria',
-        'marca',
-        'imagenes',
-        'referencia_producto',
-        'guiaRegalo'
-    ]);
-
-    // Búsqueda por texto
-    if ($search) {
-        $query->where(function($q) use ($search) {
-            $q->where('nombre', 'like', "%{$search}%")
-              ->orWhere('descripcion', 'like', "%{$search}%")
-              ->orWhere('stock', 'like', "%{$search}%")
-              ->orWhere('precio', 'like', "%{$search}%");
-        });
     }
-
-    // Filtros por categoría y marca
-    if ($request->has('id_categoria')) {
-        $query->where('id_categoria', $request->query('id_categoria'));
-    }
-
-    if ($request->has('id_marca')) {
-        $query->where('id_marca', $request->query('id_marca'));
-    }
-
-    // Ordenamiento
-    $orden = $request->query('orden', 'nombre_asc');
-    switch ($orden) {
-        case 'precio_asc':  $query->orderBy('precio', 'asc');  break;
-        case 'precio_desc': $query->orderBy('precio', 'desc'); break;
-        case 'nombre_desc': $query->orderBy('nombre', 'desc'); break;
-        case 'fecha_desc':  $query->orderBy('created_at', 'desc'); break;
-        case 'fecha_asc':   $query->orderBy('created_at', 'asc');  break;
-        default:            $query->orderBy('nombre', 'asc');  break;
-    }
-
-    $limit = $request->query('limit', 5);
-
-    return response()->json($query->paginate($limit));
-}
 
 
     public function store(Request $request)
