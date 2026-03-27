@@ -10,13 +10,14 @@ class ReferenciaProductosController extends Controller
     public function index(Request $request)
     {
         $search = $request->search;
+        $limit = $request->limit ?? 5;
 
         $referencias = ReferenciaProductos::when($search, function ($query, $search) {
             $query->where('color', 'like', "%{$search}%")
                   ->orWhere('tamano', 'like', "%{$search}%")
                   ->orWhere('codigo', 'like', "%{$search}%")
                   ->orWhere('id_referencia', 'like', "%{$search}%");
-        })->paginate(5);
+        })->paginate($limit);
         return response()->json($referencias);
     }
 
