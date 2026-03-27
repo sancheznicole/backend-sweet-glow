@@ -12,12 +12,19 @@ class CarritosController extends Controller {
      */
     public function index(Request $request){
         $search = $request->search;
+        $limit = $request->limit ?? 5;
         $carritos = Carritos::with([
             'usuario',
             "elementos"
         ])->when($search, function ($query, $search) {
-            $query->where('id_carrito', '=', "{$search}");
-        })->paginate(10);
+            $query->where('id_carrito', '=', "{$search}")
+            ->orWhereHas('usuario', function ($u) use ($search) {
+                  $u->where('nombres', 'like', "%{$search}%")
+                    ->orWhere('apellidos', 'like', "%{$search}%")
+                    ->orWhere('correo', 'like', "%{$search}%")
+                    ->orWhere('num_documento', 'like', "%{$search}%");
+            });
+        })->paginate($limit);
 
         return response()->json($carritos);
     }

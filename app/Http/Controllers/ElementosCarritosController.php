@@ -10,11 +10,13 @@ class ElementosCarritosController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(){
+    public function index(Request $request){
+        $limit = $request->limit ?? 5;
+
         $elementosCarritos = ElementosCarritos::with([
             'producto',
             "carrito"
-        ])->paginate(5);
+        ])->paginate($limit);
 
         return response()->json($elementosCarritos);
     }

@@ -12,6 +12,7 @@ class ProductosController extends Controller {
      */
     public function index(Request $request){
         $search = $request->search;
+        $limit = $request->limit ?? 5;
         
         $productos = Productos::with([
             'categoria',
@@ -24,7 +25,7 @@ class ProductosController extends Controller {
                   ->orWhere('descripcion', 'like', "%{$search}%")
                   ->orWhere('stock', 'like', "%{$search}%")
                   ->orWhere('precio', 'like', "%{$search}%");
-        })->paginate(5);
+        })->paginate($limit);
 
         return response()->json($productos);
     }
