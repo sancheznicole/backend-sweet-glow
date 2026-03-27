@@ -23,6 +23,8 @@ Route::apiResource('categories', App\Http\Controllers\CategoriasController::clas
 Route::apiResource('brands', App\Http\Controllers\MarcasController::class);
 Route::apiResource('product_references', App\Http\Controllers\ReferenciaProductosController::class);
 Route::apiResource('gift_guide', App\Http\Controllers\GuiaRegalosController::class);
+Route::get('products/tendency-latest', [App\Http\Controllers\ProductosController::class, 'tendency']);
+Route::get('products/discount', [App\Http\Controllers\ProductosController::class, 'discount']);
 Route::apiResource('products', App\Http\Controllers\ProductosController::class);
 Route::apiResource('images', App\Http\Controllers\ImagenesController::class);
 Route::apiResource('premios', App\Http\Controllers\PremioController::class);
@@ -30,7 +32,6 @@ Route::apiResource('premiados', App\Http\Controllers\PremiadosController::class)
 Route::apiResource('gift_cards', App\Http\Controllers\TarjetasRegaloController::class);
 Route::post('gift_cards/{id}/usar', [App\Http\Controllers\TarjetasRegaloController::class, 'usar']);
 Route::apiResource('order_invoice', App\Http\Controllers\FacturaPedidosController::class);
-Route::apiResource("invoices_carts", App\Http\Controllers\FacturasCarritosController::class);
 Route::apiResource('carts', App\Http\Controllers\CarritosController::class);
 Route::apiResource('cart-elements', App\Http\Controllers\ElementosCarritosController::class);
 

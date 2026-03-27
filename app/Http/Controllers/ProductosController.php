@@ -150,4 +150,30 @@ class ProductosController extends Controller {
             'message' => 'Producto eliminado correctamente'
         ], 200);
     }
+
+    public function tendency(){
+        
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])->where("tendencia", 1)->limit(10)->get();
+
+        return response()->json($productos);
+    }
+
+    public function discount(){
+        
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])->where("descuento", 1)->limit(10)->get();
+
+        return response()->json($productos);
+    }
 }
