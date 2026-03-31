@@ -9,10 +9,16 @@ use Illuminate\Validation\Rule;
 class CategoriasController extends Controller
 {
    // Listar todas las categorías
-    public function index()
+    public function index(Request $request)
     {
-        $categorias = Categorias::all();
-        return response()->json($categorias, 200);
+        $search = $request->search;
+        $limit = $request->limit ?? 5;
+
+        $categorias = Categorias::when($search, function ($query, $search) {
+            $query->where('nombre', 'like', "%{$search}%")
+                  ->orWhere('id_categoria', 'like', "%{$search}%");
+        })->paginate($limit);
+        return response()->json($categorias, 200);  
     }
 
     // Crear categoría
