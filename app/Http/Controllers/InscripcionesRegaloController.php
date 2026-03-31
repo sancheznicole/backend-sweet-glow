@@ -8,9 +8,28 @@ use Illuminate\Http\Request;
 
 class InscripcionesRegaloController extends Controller
 {
-    public function index()
+
+    // Listar todas las categorías
+    public function index(Request $request)
     {
-        return InscripcionRegalo::with(['usuario','factura'])->get();
+        $search = $request->search;
+        $limit = $request->limit ?? 5;
+
+        $categorias = InscripcionRegalo::with(['usuario','factura'])
+            ->when($search, function ($query, $search) {
+            $query->where('id_inscripcion', 'like', "%{$search}%")
+                  ->orWhere('id_inscripcion', 'like', "%{$search}%")
+                  ->orWhereHas('usuario', function ($u) use ($search) {
+                        $u->where('nombres', 'like', "%{$search}%")
+                            ->orWhere('apellidos', 'like', "%{$search}%")
+                            ->orWhere('correo', 'like', "%{$search}%")
+                            ->orWhere('num_documento', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('factura', function ($u) use ($search) {
+                        $u->where('id_factura_pedido', 'like', "%{$search}%");
+                    });
+        })->paginate($limit);
+        return response()->json($categorias, 200);  
     }
 
     public function store(Request $request)

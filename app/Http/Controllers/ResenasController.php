@@ -10,6 +10,7 @@ class ResenasController extends Controller
     // LISTAR RESEÑAS CON PAGINACIÓN
     public function index(Request $request)
     {
+        $search = $request->query('search');
         $perPage = $request->query('limit', 10);
         $perPage = min(max(1, (int)$perPage), 100);
 
@@ -18,6 +19,34 @@ class ResenasController extends Controller
                 'producto.marca',       // carga producto Y su marca
                 'usuario'
             ])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    // campos de la reseña
+                    $q->where('resena', 'like', "%{$search}%")
+                    ->orWhere('id_resena', 'like', "%{$search}%")
+
+                    // relación producto
+                    ->orWhereHas('producto', function ($p) use ($search) {
+                        $p->where('nombre', 'like', "%{$search}%")
+                            ->orWhere('descripcion', 'like', "%{$search}%")
+                            ->owWhere('id_producto', 'like', "%{$search}%")
+                            ->orWhereHas('categoria', function ($c) use ($search) {
+                                $c->where('nombre', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('marca', function ($m) use ($search) {
+                                $m->where('nombre', 'like', "%{$search}%");
+                            });
+                    })
+
+                    // relación usuario
+                    ->orWhereHas('usuario', function ($u) use ($search) {
+                        $u->where('nombres', 'like', "%{$search}%")
+                            ->orWhere('apellidos', 'like', "%{$search}%")
+                            ->orWhere('correo', 'like', "%{$search}%")
+                            ->orWhere('num_documento', 'like', "%{$search}%");
+                    });
+                });
+            })
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 

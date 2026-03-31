@@ -9,9 +9,17 @@ use Illuminate\Validation\Rule;
 class MarcasController extends Controller
 {
     // Listar todas
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Marcas::all(), 200);
+        $search = $request->search;
+        $limit = $request->limit ?? 5;
+
+        $marcas = Marcas::when($search, function ($query, $search) {
+            $query->where('nombre', 'like', "%{$search}%")
+                  ->orWhere('pais_origen', 'like', "%{$search}%")
+                  ->orWhere('id_categoria', 'like', "%{$search}%");
+        })->paginate($limit);
+        return response()->json($marcas, 200);
     }
 
     // Crear
