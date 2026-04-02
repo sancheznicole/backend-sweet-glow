@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Productos;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class ProductosController extends Controller {
@@ -228,6 +229,77 @@ class ProductosController extends Controller {
         ->when($tendencia, fn($q) => $q->where('tendencia', $tendencia))
         ->when($regalo, fn($q) => $q->where('prod_regalo', $regalo))
         ->when($premio, fn($q) => $q->where('premio', $premio))->paginate($limit);
+
+        return response()->json($productos);
+    }
+
+    public function reducirStock(Request $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            $pedido = $request->input('order_invoice');
+
+            $elementos = $pedido['carrito']['elementos'];
+
+            foreach ($elementos as $item) {
+                $productoId = $item['id_producto'];
+                $cantidad = $item['cantidad'];
+
+                $producto = Productos::lockForUpdate()->find($productoId);
+
+                if (!$producto) {
+                    throw new \Exception("Producto no encontrado ID: " . $productoId);
+                }
+
+                // Validar stock
+                if ($producto->stock < $cantidad) {
+                    throw new \Exception("Stock insuficiente para el producto ID: " . $productoId);
+                }
+
+                // Restar stock
+                $producto->stock -= $cantidad;
+                $producto->save();
+            }
+
+            DB::commit();
+
+            return [
+                "valid" => true,
+                "message" => "Stock actualizado correctamente"
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return [
+                "valid" => false,
+                "message" => $e->getMessage()
+            ];
+        }
+    }
+
+    public function byBrandsAndCategories(Request $request)
+    {
+        $brands = $request->brands;
+        $categories = $request->categories;
+        $limit = $request->limit ?? 20;
+
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])
+        ->when($brands, function ($query, $brands) {
+            $query->whereIn('id_marca', $brands);
+        })
+        ->when($categories, function ($query, $categories) {
+            $query->whereIn('id_categoria', $categories);
+        })
+        ->limit($limit)
+        ->get();
 
         return response()->json($productos);
     }
