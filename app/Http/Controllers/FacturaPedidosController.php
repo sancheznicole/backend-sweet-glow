@@ -67,7 +67,10 @@ class FacturaPedidosController extends Controller {
     {
         $facturaPedido = FacturaPedidos::with([
             'usuario',
-            'carrito',
+            'carrito.elementos.producto.referencia_producto',
+            'carrito.elementos.producto.imagenes',
+            'carrito.elementos.producto.categoria',
+            'carrito.elementos.producto.marca',
             'tarjeta',
         ])->find($id);
 

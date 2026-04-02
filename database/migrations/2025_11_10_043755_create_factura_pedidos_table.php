@@ -18,6 +18,8 @@ return new class extends Migration
             $table->unsignedBigInteger('id_tarjeta')->nullable(true);
             $table->decimal('neto', 10, 2)->nullable(false);
             $table->decimal('descuento', 10, 2)->default(0);
+            $table->string('mp_status')->nullable(true);
+            $table->string('mp_id')->nullable(true);
             $table->enum('status', ['pending', 'paid', "failed"])->default('pending');
             $table->foreign('id_usuario')->references('id_usuario')->on('usuarios');
             $table->foreign('id_carrito')->references('id_carrito')->on('carritos');

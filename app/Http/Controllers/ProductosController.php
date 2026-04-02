@@ -176,4 +176,59 @@ class ProductosController extends Controller {
 
         return response()->json($productos);
     }
+
+    public function searcher(Request $request){
+        $search = $request->search;
+        $limit = $request->limit ?? 5;
+        $descuento = $request->descuento;
+        $tendencia = $request->tendencia;
+        $regalo = $request->regalo;
+        $premio = $request->premio;
+        
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])->when($search, function ($query, $search) {
+            $query->where(function($q) use ($search) {
+
+                $q->where('nombre', 'like', "%{$search}%")
+                ->orWhere('descripcion', 'like', "%{$search}%")
+                ->orWhere('stock', 'like', "%{$search}%")
+                ->orWhere('precio', 'like', "%{$search}%");
+
+                // Relación categoria
+                $q->orWhereHas('categoria', function ($q2) use ($search) {
+                    $q2->where('nombre', 'like', "%{$search}%");
+                });
+
+                // Relación marca
+                $q->orWhereHas('marca', function ($q2) use ($search) {
+                    $q2->where('nombre', 'like', "%{$search}%")
+                    ->orWhere('pais_origen', 'like', "%{$search}%");
+                });
+
+                // Relación referencia_producto
+                $q->orWhereHas('referencia_producto', function ($q2) use ($search) {
+                    $q2->where('codigo', 'like', "%{$search}%")
+                    ->orWhere('color', 'like', "%{$search}%")
+                    ->orWhere('tamano', 'like', "%{$search}%");
+                });
+
+                // Relación guiaRegalo 
+                $q->orWhereHas('guiaRegalo', function ($q2) use ($search) {
+                    $q2->where('nombre', 'like', "%{$search}%")
+                    ->orWhere('descripcion', 'like', "%{$search}%");
+                });
+
+            });
+        })->when($descuento, fn($q) => $q->where('descuento', $descuento))
+        ->when($tendencia, fn($q) => $q->where('tendencia', $tendencia))
+        ->when($regalo, fn($q) => $q->where('prod_regalo', $regalo))
+        ->when($premio, fn($q) => $q->where('premio', $premio))->paginate($limit);
+
+        return response()->json($productos);
+    }
 }
