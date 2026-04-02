@@ -120,7 +120,7 @@ class TarjetasRegaloController extends Controller
         $tarjetas = TarjetasRegalo::with('usuario')
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('id_tarjeta', 'like', "%{$search}%")
+                    $q->where('id_tarjeta', $search)
                     ->orWhere("fecha_de_uso", "like", "%{$search}%")
                     ->orWhereHas('usuario', function ($u) use ($search) {
                         $u->where('nombres', 'like', "%{$search}%")
