@@ -23,12 +23,14 @@ Route::apiResource('categories', App\Http\Controllers\CategoriasController::clas
 Route::apiResource('brands', App\Http\Controllers\MarcasController::class);
 Route::apiResource('product_references', App\Http\Controllers\ReferenciaProductosController::class);
 Route::apiResource('gift_guide', App\Http\Controllers\GuiaRegalosController::class);
+Route::get('products/searcher', [App\Http\Controllers\ProductosController::class, 'searcher']);
 Route::get('products/tendency-latest', [App\Http\Controllers\ProductosController::class, 'tendency']);
 Route::get('products/discount', [App\Http\Controllers\ProductosController::class, 'discount']);
 Route::apiResource('products', App\Http\Controllers\ProductosController::class);
 Route::apiResource('images', App\Http\Controllers\ImagenesController::class);
 Route::apiResource('premios', App\Http\Controllers\PremioController::class);
 Route::apiResource('premiados', App\Http\Controllers\PremiadosController::class);
+Route::get('gift_cards/getOrSearch', [App\Http\Controllers\TarjetasRegaloController::class, 'getOrSearch']);
 Route::apiResource('gift_cards', App\Http\Controllers\TarjetasRegaloController::class);
 Route::post('gift_cards/{id}/usar', [App\Http\Controllers\TarjetasRegaloController::class, 'usar']);
 Route::apiResource('order_invoice', App\Http\Controllers\FacturaPedidosController::class);
@@ -43,4 +45,6 @@ Route::apiResource('reviews', App\Http\Controllers\ResenasController::class);
 Route::get('reviews/product/{id}', [App\Http\Controllers\ResenasController::class, 'getByProduct']);
 
 Route::post('/create-preference', [App\Http\Controllers\PaymentController::class, 'createPreference']);
-Route::post('/webhook/mercadopago', [App\Http\Controllers\WebhookController::class, 'handle']);
+Route::post('/payment/verify', [App\Http\Controllers\PaymentController::class, 'verify']);
+Route::post('/emails/electronic-bill', [App\Http\Controllers\EmailsController::class, 'sendElectronicBill']);
+Route::get('/factura/{id}/pdf', [App\Http\Controllers\DownloadsController::class, 'downloadPDF']);

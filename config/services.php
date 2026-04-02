@@ -20,6 +20,7 @@ return [
 
     'resend' => [
         'key' => env('RESEND_KEY'),
+        'from' => env('RESEND_FROM'),
     ],
 
     'ses' => [
@@ -36,6 +37,10 @@ return [
     ],
     'mp' => [
         'token' => env('MP_ACCESS_TOKEN'),
+        'return_url' => env('FRONT_URL_RETURN_MERCADOPAGO'),
+    ],
+    'deploy' => [
+        'url_storage' => env('URL_DESPLIEGUE_STORAGE'),
     ],
 
 ];
