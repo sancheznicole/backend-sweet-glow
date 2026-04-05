@@ -25,6 +25,7 @@ Route::apiResource('product_references', App\Http\Controllers\ReferenciaProducto
 Route::apiResource('gift_guide', App\Http\Controllers\GuiaRegalosController::class);
 Route::post('products/handle-reduce-stock', [App\Http\Controllers\ProductosController::class, 'reducirStock']);
 Route::get('products/searcher', [App\Http\Controllers\ProductosController::class, 'searcher']);
+Route::get('products/filtering', [App\Http\Controllers\ProductosController::class, 'filtering']);
 Route::get('products/byBrandsAndCategories', [App\Http\Controllers\ProductosController::class, 'byBrandsAndCategories']);
 Route::get('products/tendency-latest', [App\Http\Controllers\ProductosController::class, 'tendency']);
 Route::get('products/discount', [App\Http\Controllers\ProductosController::class, 'discount']);
