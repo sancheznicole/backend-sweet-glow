@@ -7,6 +7,7 @@ use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Exceptions\MPApiException;
 use MercadoPago\MercadoPagoConfig;
 use App\Models\FacturaPedidos;
+use App\Models\TarjetasRegalo;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -30,40 +31,59 @@ class PaymentController extends Controller
         $total = (float)$factura->neto;
         $descuento = (float)$factura->descuento;
         
-        $totalFinal = $total - $descuento;
-        
-        $items = [
-            [
-                "title" => "Pago de factura #" . $factura->id_factura_pedido . " Sweet Glow",
-                "quantity" => 1,
-                "unit_price" => round($totalFinal, 2)
-            ]
-        ];
+        $totalFinal = max(0, $total - $descuento);
 
-        try {
-            $preference = $client->create([
-                "items" => $items,
-                "external_reference" => (string)$factura->id_factura_pedido,
-                "back_urls" => [
-                    "success" => config('services.mp.return_url')."/success",
-                    "failure" => config('services.mp.return_url')."/failure",
-                    "pending" => config('services.mp.return_url')."/pending"
-                ],
-                "auto_return" => "approved",
-                'metadata' => [
-                    'id_factura' => (string)$factura->id_factura_pedido
+        if($totalFinal == 0){
+
+            $factura->status = "paid";
+
+            $id_tarjeta = $factura->id_tarjeta;
+
+            $tarjeta = TarjetasRegalo::find($id_tarjeta);
+            $tarjeta->estado = 'usada';
+
+            $tarjeta->update();
+            $factura->update();
+
+            return response()->json([
+                'successZeroPay' => 'Factura pago 0',
+                "factura" => $request->invoice_id
+            ], 200);
+
+        }else{
+            $items = [
+                [
+                    "title" => "Pago de factura #" . $factura->id_factura_pedido . " Sweet Glow",
+                    "quantity" => 1,
+                    "unit_price" => round($totalFinal, 2)
                 ]
-            ]);
+            ];
 
-            return response()->json([
-                "init_point" => $preference->init_point
-            ]);
+            try {
+                $preference = $client->create([
+                    "items" => $items,
+                    "external_reference" => (string)$factura->id_factura_pedido,
+                    "back_urls" => [
+                        "success" => config('services.mp.return_url')."/success",
+                        "failure" => config('services.mp.return_url')."/failure",
+                        "pending" => config('services.mp.return_url')."/pending"
+                    ],
+                    "auto_return" => "approved",
+                    'metadata' => [
+                        'id_factura' => (string)$factura->id_factura_pedido
+                    ]
+                ]);
 
-        } catch (MPApiException $e) {
+                return response()->json([
+                    "init_point" => $preference->init_point
+                ]);
 
-            return response()->json([
-                'error' => $e->getApiResponse()->getContent()
-            ], 500);
+            } catch (MPApiException $e) {
+
+                return response()->json([
+                    'error' => $e->getApiResponse()->getContent()
+                ], 500);
+            }
         }
     }
 

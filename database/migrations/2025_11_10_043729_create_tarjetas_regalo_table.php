@@ -19,7 +19,7 @@ return new class extends Migration
             $table->dateTime('fecha_de_uso')->nullable(false);
             $table->string('estado')->nullable(false);
             $table->unsignedBigInteger('id_usuario')->nullable(false);
-            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios');
+            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios')->onDelete('cascade');
             $table->timestamps();
         });
         DB::statement("ALTER TABLE tarjetas_regalo AUTO_INCREMENT = 1000;");
