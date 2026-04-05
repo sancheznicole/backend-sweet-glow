@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Productos;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class ProductosController extends Controller {
@@ -230,5 +231,123 @@ class ProductosController extends Controller {
         ->when($premio, fn($q) => $q->where('premio', $premio))->paginate($limit);
 
         return response()->json($productos);
+    }
+
+    public function reducirStock(Request $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            $pedido = $request->input('order_invoice');
+
+            $elementos = $pedido['carrito']['elementos'];
+
+            foreach ($elementos as $item) {
+                $productoId = $item['id_producto'];
+                $cantidad = $item['cantidad'];
+
+                $producto = Productos::lockForUpdate()->find($productoId);
+
+                if (!$producto) {
+                    throw new \Exception("Producto no encontrado ID: " . $productoId);
+                }
+
+                // Validar stock
+                if ($producto->stock < $cantidad) {
+                    throw new \Exception("Stock insuficiente para el producto ID: " . $productoId);
+                }
+
+                // Restar stock
+                $producto->stock -= $cantidad;
+                $producto->save();
+            }
+
+            DB::commit();
+
+            return [
+                "valid" => true,
+                "message" => "Stock actualizado correctamente"
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return [
+                "valid" => false,
+                "message" => $e->getMessage()
+            ];
+        }
+    }
+
+    public function byBrandsAndCategories(Request $request)
+    {
+        $brands = $request->brands;
+        $categories = $request->categories;
+        $limit = $request->limit ?? 20;
+
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])
+        ->when($brands, function ($query, $brands) {
+            $query->whereIn('id_marca', $brands);
+        })
+        ->when($categories, function ($query, $categories) {
+            $query->whereIn('id_categoria', $categories);
+        })
+        ->limit($limit)
+        ->get();
+
+        return response()->json($productos);
+    }
+
+    public function filtering(Request $request)
+    {
+        $search = $request->search;
+
+        $query = Productos::with([
+            'categoria',
+            'marca',
+            'imagenes',
+            'referencia_producto',
+            'guiaRegalo'
+        ]);
+
+        // Búsqueda por texto
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                ->orWhere('descripcion', 'like', "%{$search}%")
+                ->orWhere('stock', 'like', "%{$search}%")
+                ->orWhere('precio', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtros por categoría y marca
+        if ($request->has('id_categoria')) {
+            $query->where('id_categoria', $request->query('id_categoria'));
+        }
+
+        if ($request->has('id_marca')) {
+            $query->where('id_marca', $request->query('id_marca'));
+        }
+
+        // Ordenamiento
+        $orden = $request->query('orden', 'nombre_asc');
+        switch ($orden) {
+            case 'precio_asc':  $query->orderBy('precio', 'asc');  break;
+            case 'precio_desc': $query->orderBy('precio', 'desc'); break;
+            case 'nombre_desc': $query->orderBy('nombre', 'desc'); break;
+            case 'fecha_desc':  $query->orderBy('created_at', 'desc'); break;
+            case 'fecha_asc':   $query->orderBy('created_at', 'asc');  break;
+            default:            $query->orderBy('nombre', 'asc');  break;
+        }
+
+        $limit = $request->query('limit', 5);
+
+        return response()->json($query->paginate($limit));
     }
 }
