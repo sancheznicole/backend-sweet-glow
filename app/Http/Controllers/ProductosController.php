@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Productos;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
 class ProductosController extends Controller {
@@ -12,6 +13,7 @@ class ProductosController extends Controller {
      */
     public function index(Request $request){
         $search = $request->search;
+        $limit = $request->limit ?? 5;
         
         $productos = Productos::with([
             'categoria',
@@ -24,7 +26,7 @@ class ProductosController extends Controller {
                   ->orWhere('descripcion', 'like', "%{$search}%")
                   ->orWhere('stock', 'like', "%{$search}%")
                   ->orWhere('precio', 'like', "%{$search}%");
-        })->paginate(5);
+        })->paginate($limit);
 
         return response()->json($productos);
     }
@@ -148,5 +150,204 @@ class ProductosController extends Controller {
         return response()->json([
             'message' => 'Producto eliminado correctamente'
         ], 200);
+    }
+
+    public function tendency(){
+        
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])->where("tendencia", 1)->limit(10)->get();
+
+        return response()->json($productos);
+    }
+
+    public function discount(){
+        
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])->where("descuento", 1)->limit(10)->get();
+
+        return response()->json($productos);
+    }
+
+    public function searcher(Request $request){
+        $search = $request->search;
+        $limit = $request->limit ?? 5;
+        $descuento = $request->descuento;
+        $tendencia = $request->tendencia;
+        $regalo = $request->regalo;
+        $premio = $request->premio;
+        
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])->when($search, function ($query, $search) {
+            $query->where(function($q) use ($search) {
+
+                $q->where('nombre', 'like', "%{$search}%")
+                ->orWhere('descripcion', 'like', "%{$search}%")
+                ->orWhere('stock', 'like', "%{$search}%")
+                ->orWhere('precio', 'like', "%{$search}%");
+
+                // Relación categoria
+                $q->orWhereHas('categoria', function ($q2) use ($search) {
+                    $q2->where('nombre', 'like', "%{$search}%");
+                });
+
+                // Relación marca
+                $q->orWhereHas('marca', function ($q2) use ($search) {
+                    $q2->where('nombre', 'like', "%{$search}%")
+                    ->orWhere('pais_origen', 'like', "%{$search}%");
+                });
+
+                // Relación referencia_producto
+                $q->orWhereHas('referencia_producto', function ($q2) use ($search) {
+                    $q2->where('codigo', 'like', "%{$search}%")
+                    ->orWhere('color', 'like', "%{$search}%")
+                    ->orWhere('tamano', 'like', "%{$search}%");
+                });
+
+                // Relación guiaRegalo 
+                $q->orWhereHas('guiaRegalo', function ($q2) use ($search) {
+                    $q2->where('nombre', 'like', "%{$search}%")
+                    ->orWhere('descripcion', 'like', "%{$search}%");
+                });
+
+            });
+        })->when($descuento, fn($q) => $q->where('descuento', $descuento))
+        ->when($tendencia, fn($q) => $q->where('tendencia', $tendencia))
+        ->when($regalo, fn($q) => $q->where('prod_regalo', $regalo))
+        ->when($premio, fn($q) => $q->where('premio', $premio))->paginate($limit);
+
+        return response()->json($productos);
+    }
+
+    public function reducirStock(Request $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            $pedido = $request->input('order_invoice');
+
+            $elementos = $pedido['carrito']['elementos'];
+
+            foreach ($elementos as $item) {
+                $productoId = $item['id_producto'];
+                $cantidad = $item['cantidad'];
+
+                $producto = Productos::lockForUpdate()->find($productoId);
+
+                if (!$producto) {
+                    throw new \Exception("Producto no encontrado ID: " . $productoId);
+                }
+
+                // Validar stock
+                if ($producto->stock < $cantidad) {
+                    throw new \Exception("Stock insuficiente para el producto ID: " . $productoId);
+                }
+
+                // Restar stock
+                $producto->stock -= $cantidad;
+                $producto->save();
+            }
+
+            DB::commit();
+
+            return [
+                "valid" => true,
+                "message" => "Stock actualizado correctamente"
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return [
+                "valid" => false,
+                "message" => $e->getMessage()
+            ];
+        }
+    }
+
+    public function byBrandsAndCategories(Request $request)
+    {
+        $brands = $request->brands;
+        $categories = $request->categories;
+        $limit = $request->limit ?? 20;
+
+        $productos = Productos::with([
+            'categoria',
+            'marca',
+            'referencia_producto',
+            'guiaRegalo',
+            'imagenes'
+        ])
+        ->when($brands, function ($query, $brands) {
+            $query->whereIn('id_marca', $brands);
+        })
+        ->when($categories, function ($query, $categories) {
+            $query->whereIn('id_categoria', $categories);
+        })
+        ->limit($limit)
+        ->get();
+
+        return response()->json($productos);
+    }
+
+    public function filtering(Request $request)
+    {
+        $search = $request->search;
+
+        $query = Productos::with([
+            'categoria',
+            'marca',
+            'imagenes',
+            'referencia_producto',
+            'guiaRegalo'
+        ]);
+
+        // Búsqueda por texto
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                ->orWhere('descripcion', 'like', "%{$search}%")
+                ->orWhere('stock', 'like', "%{$search}%")
+                ->orWhere('precio', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtros por categoría y marca
+        if ($request->has('id_categoria')) {
+            $query->where('id_categoria', $request->query('id_categoria'));
+        }
+
+        if ($request->has('id_marca')) {
+            $query->where('id_marca', $request->query('id_marca'));
+        }
+
+        // Ordenamiento
+        $orden = $request->query('orden', 'nombre_asc');
+        switch ($orden) {
+            case 'precio_asc':  $query->orderBy('precio', 'asc');  break;
+            case 'precio_desc': $query->orderBy('precio', 'desc'); break;
+            case 'nombre_desc': $query->orderBy('nombre', 'desc'); break;
+            case 'fecha_desc':  $query->orderBy('created_at', 'desc'); break;
+            case 'fecha_asc':   $query->orderBy('created_at', 'asc');  break;
+            default:            $query->orderBy('nombre', 'asc');  break;
+        }
+
+        $limit = $request->query('limit', 5);
+
+        return response()->json($query->paginate($limit));
     }
 }

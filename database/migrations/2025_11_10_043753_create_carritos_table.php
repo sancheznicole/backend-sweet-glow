@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('id_carrito');
             $table->unsignedBigInteger('id_usuario')->nullable(false);
             $table->enum('status', ['active', 'checked_out'])->default('active');
-            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios');
+            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios')->onDelete('cascade');
             $table->timestamps();
         });
     }

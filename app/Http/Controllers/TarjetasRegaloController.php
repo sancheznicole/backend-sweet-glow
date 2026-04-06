@@ -9,22 +9,22 @@ use Carbon\Carbon;
 class TarjetasRegaloController extends Controller
 {
     // 🔹 LISTAR TODAS LAS TARJETAS
-public function index(Request $request)
-{
-    $search = $request->search;
-    $idUsuario = $request->id_usuario; // recibe ?id_usuario=1 desde el frontend
+    public function index(Request $request)
+    {
+        $search = $request->search;
+        $idUsuario = $request->id_usuario; // recibe ?id_usuario=1 desde el frontend
 
-    $tarjetas = TarjetasRegalo::with('usuario')
-        ->when($search, function ($query, $search) {
-            $query->where('id_tarjeta', 'like', "%{$search}%");
-        })
-        ->when($idUsuario, function ($query, $idUsuario) {
-            $query->where('id_usuario', $idUsuario);
-        })
-        ->paginate(100);
+        $tarjetas = TarjetasRegalo::with('usuario')
+            ->when($search, function ($query, $search) {
+                $query->where('id_tarjeta', 'like', "%{$search}%");
+            })
+            ->when($idUsuario, function ($query, $idUsuario) {
+                $query->where('id_usuario', $idUsuario);
+            })
+            ->paginate(100);
 
-    return response()->json($tarjetas);
-}
+        return response()->json($tarjetas);
+    }
 
     // 🔹 CREAR TARJETA
     public function store(Request $request)
@@ -109,6 +109,30 @@ public function index(Request $request)
         $tarjeta->delete();
 
         return response()->json(['mensaje' => 'Tarjeta eliminada correctamente']);
+    }
+
+    // listar tarjetas y buscar
+    public function getOrSearch(Request $request)
+    {
+        $search = $request->search;
+        $limit = $request->limit ?? 5;
+
+        $tarjetas = TarjetasRegalo::with('usuario')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('id_tarjeta', $search)
+                    ->orWhere("fecha_de_uso", "like", "%{$search}%")
+                    ->orWhereHas('usuario', function ($u) use ($search) {
+                        $u->where('nombres', 'like', "%{$search}%")
+                            ->orWhere('apellidos', 'like', "%{$search}%")
+                            ->orWhere('correo', 'like', "%{$search}%")
+                            ->orWhere('num_documento', 'like', "%{$search}%");
+                    });
+                });
+            })
+            ->paginate($limit);
+
+        return response()->json($tarjetas);
     }
 }
 

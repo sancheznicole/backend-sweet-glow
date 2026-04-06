@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('inscripciones_regalo', function (Blueprint $table) {
             $table->id('id_inscripcion');
             $table->string('estado')->default('participando')->nullable(false);
-            $table->unsignedBigInteger('id_usuario')->unique()->nullable(false);
+            $table->unsignedBigInteger('id_usuario')->nullable(false);
             $table->unsignedBigInteger('id_factura_pedido')->nullable(false);
-            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios');
-            $table->foreign('id_factura_pedido')->references('id_factura_pedido')->on('factura_pedidos');
+            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios')->onDelete('cascade');
+            $table->foreign('id_factura_pedido')->references('id_factura_pedido')->on('factura_pedidos')->onDelete('cascade');
             $table->timestamps();
         });
     }

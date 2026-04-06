@@ -12,14 +12,21 @@ class FacturaPedidosController extends Controller {
      */
     public function index(Request $request){
         $search = $request->search;
+        $limit = $request->limit ?? 5;
 
         $facturaPedidos = FacturaPedidos::with([
             'usuario',
             'carrito',
             'tarjeta',
         ])->when($search, function ($query, $search) {
-            $query->where('id_factura_pedido', 'like', "%{$search}%");
-        })->paginate(5);
+            $query->where('id_factura_pedido', 'like', "%{$search}%")
+            ->orWhereHas('usuario', function ($u) use ($search) {
+                  $u->where('nombres', 'like', "%{$search}%")
+                    ->orWhere('apellidos', 'like', "%{$search}%")
+                    ->orWhere('correo', 'like', "%{$search}%")
+                    ->orWhere('num_documento', 'like', "%{$search}%");
+            });
+        })->paginate($limit);
 
         return response()->json($facturaPedidos);
     }
@@ -60,7 +67,10 @@ class FacturaPedidosController extends Controller {
     {
         $facturaPedido = FacturaPedidos::with([
             'usuario',
-            'carrito',
+            'carrito.elementos.producto.referencia_producto',
+            'carrito.elementos.producto.imagenes',
+            'carrito.elementos.producto.categoria',
+            'carrito.elementos.producto.marca',
             'tarjeta',
         ])->find($id);
 

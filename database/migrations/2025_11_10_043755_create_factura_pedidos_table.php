@@ -18,10 +18,12 @@ return new class extends Migration
             $table->unsignedBigInteger('id_tarjeta')->nullable(true);
             $table->decimal('neto', 10, 2)->nullable(false);
             $table->decimal('descuento', 10, 2)->default(0);
+            $table->string('mp_status')->nullable(true);
+            $table->string('mp_id')->nullable(true);
             $table->enum('status', ['pending', 'paid', "failed"])->default('pending');
-            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios');
-            $table->foreign('id_carrito')->references('id_carrito')->on('carritos');
-            $table->foreign('id_tarjeta')->references('id_tarjeta')->on('tarjetas_regalo');
+            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios')->onDelete('cascade');
+            $table->foreign('id_carrito')->references('id_carrito')->on('carritos')->onDelete('cascade');
+            $table->foreign('id_tarjeta')->references('id_tarjeta')->on('tarjetas_regalo')->onDelete('cascade');
             $table->timestamps();
         });
         DB::statement("ALTER TABLE factura_pedidos AUTO_INCREMENT = 1000;");

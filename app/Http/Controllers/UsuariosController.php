@@ -12,6 +12,7 @@ class UsuariosController extends Controller {
      */
     public function index(Request $request){
         $search = $request->search;
+        $limit = $request->limit ?? 5;
 
         $users = Usuarios::with([
             'rol',
@@ -21,7 +22,7 @@ class UsuariosController extends Controller {
                   ->orWhere('correo', 'like', "%{$search}%")
                   ->orWhere('num_documento', 'like', "%{$search}%")
                   ->orWhere('telefono', 'like', "%{$search}%");
-        })->paginate(5);
+        })->paginate($limit);
 
         return response()->json($users);
     }

@@ -16,8 +16,8 @@ return new class extends Migration
             $table->integer('resena');
             $table->unsignedBigInteger('id_producto');
             $table->unsignedBigInteger('id_usuario');
-            $table->foreign('id_producto')->references('id_producto')->on('productos');
-            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios');
+            $table->foreign('id_producto')->references('id_producto')->on('productos')->onDelete('cascade');
+            $table->foreign('id_usuario')->references('id_usuario')->on('usuarios')->onDelete('cascade');
             $table->timestamps();
         });
     }

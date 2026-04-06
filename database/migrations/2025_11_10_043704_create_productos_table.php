@@ -24,9 +24,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id_categoria')->nullable(false);
             $table->unsignedBigInteger('id_marca')->nullable(false);
             $table->unsignedBigInteger('id_referencia')->unique()->nullable(false);
-            $table->foreign('id_categoria')->references('id_categoria')->on('categorias');
-            $table->foreign('id_marca')->references('id_marca')->on('marcas');
-            $table->foreign('id_referencia')->references('id_referencia')->on('referencia_productos');
+            $table->foreign('id_categoria')->references('id_categoria')->on('categorias')->onDelete('cascade');
+            $table->foreign('id_marca')->references('id_marca')->on('marcas')->onDelete('cascade');
+            $table->foreign('id_referencia')->references('id_referencia')->on('referencia_productos')->onDelete('cascade');
  
             $table->timestamps();
         });

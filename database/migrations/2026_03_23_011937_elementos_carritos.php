@@ -17,8 +17,8 @@ return new class extends Migration
             $table->unsignedBigInteger('id_carrito')->nullable(false);
             $table->integer('cantidad')->nullable(false);
             $table->decimal('price', 10, 2)->nullable(false);
-            $table->foreign('id_producto')->references('id_producto')->on('productos');
-            $table->foreign('id_carrito')->references('id_carrito')->on('carritos');
+            $table->foreign('id_producto')->references('id_producto')->on('productos')->onDelete('cascade');
+            $table->foreign('id_carrito')->references('id_carrito')->on('carritos')->onDelete('cascade');
             $table->timestamps();
         });
     }
