@@ -10,18 +10,28 @@ class DownloadsController extends Controller
 {
     public function downloadPDF($id)
     {
-        $factura = FacturaPedidos::with([
-            'usuario',
-            'carrito.elementos.producto.referencia_producto',
-            'carrito.elementos.producto.imagenes',
-            'carrito.elementos.producto.categoria',
-            'carrito.elementos.producto.marca',
-        ])->findOrFail($id);
+        try {
+            $factura = FacturaPedidos::with([
+                'usuario',
+                'carrito.elementos.producto.referencia_producto',
+                'carrito.elementos.producto.imagenes',
+                'carrito.elementos.producto.categoria',
+                'carrito.elementos.producto.marca',
+            ])->findOrFail($id);
 
-        // return response()->json($factura);
+            // return response()->json($factura);
 
-        $pdf = Pdf::loadView('factura_pdf', compact('factura'));
+            $pdf = Pdf::loadView('factura_pdf', compact('factura'));
 
-        return $pdf->download("factura_{$id}.pdf");
+            return $pdf->download("factura_{$id}.pdf");
+
+        } catch (\Exception $e) {
+            // Retorna el error real en JSON para que lo veas en el network
+            return response()->json([
+                'error'   => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ], 500);
+        }
     }
 }

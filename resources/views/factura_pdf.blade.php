@@ -37,6 +37,16 @@
             padding: 10px;
             margin-bottom: 10px;
             overflow: hidden;
+            border-radius: 5px;
+        }
+
+        .card-header h1 {
+            color: green;
+        }
+
+        .products-title {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
         }
 
         /* reemplazo de flex */
@@ -67,6 +77,15 @@
         .clear {
             clear: both;
         }
+        .image-container {
+            float: left;
+            width: 120px; /* tamaño fijo mejor que % */
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -75,9 +94,17 @@
     <div class="card-factura">
 
         <div class="card-header">
-            <h1>✅ Pago aprobado</h1>
+            <h1>Pago aprobado</h1>
             <h2>Factura #{{ $factura->id_factura_pedido }}</h2>
             <p>Fecha: {{ substr($factura->created_at, 0, 10) }}</p>
+        </div>
+
+        <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd;">
+            <p><strong>Cliente:</strong> {{ $factura->usuario->nombres }} {{ $factura->usuario->apellidos }}</p>
+            <p><strong>Documento:</strong> {{ $factura->usuario->tipo_documento }} {{ $factura->usuario->num_documento }}</p>
+            <p><strong>Correo:</strong> {{ $factura->usuario->correo }}</p>
+            <p><strong>Teléfono:</strong> {{ $factura->usuario->telefono }}</p>
+            <p><strong>Dirección:</strong> {{ $factura->usuario->direccion }}</p>
         </div>
 
         <div class="products-title">Productos:</div>
@@ -87,7 +114,9 @@
                 <div class="cart-product-container">
 
                     @if($el->producto && isset($el->producto->imagenes[0]))
-                        <img src="{{ public_path('storage/imagenes_productos/'.$el->producto->imagenes[0]->filename) }}">
+                        <div class="image-container">
+                            <img src="{{ public_path('storage/'.$el->producto->imagenes[0]->filename) }}">
+                        </div>
                     @endif
 
                     <div class="info-container">

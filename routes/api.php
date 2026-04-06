@@ -56,3 +56,56 @@ Route::post('/create-giftcard-preference', [App\Http\Controllers\PaymentControll
 Route::post('/payment/verify', [App\Http\Controllers\PaymentController::class, 'verify']);
 Route::post('/emails/electronic-bill', [App\Http\Controllers\EmailsController::class, 'sendElectronicBill']);
 Route::get('/factura/{id}/pdf', [App\Http\Controllers\DownloadsController::class, 'downloadPDF']);
+
+// routes/web.php
+Route::get('/test-factura/{id}', function ($id) {
+    $factura = \App\Models\FacturaPedidos::with([
+        'usuario',
+        'carrito.elementos.producto.referencia_producto',
+        'carrito.elementos.producto.imagenes',
+        'carrito.elementos.producto.categoria',
+        'carrito.elementos.producto.marca',
+    ])->findOrFail($id);
+
+    $productos = [];
+    foreach ($factura->carrito->elementos as $elemento) {
+        $producto = $elemento->producto;
+
+        $imagenBase64 = null;
+        if ($producto && $producto->imagenes->isNotEmpty()) {
+            $filename = $producto->imagenes[0]->filename;
+            $fullPath = public_path('storage/' . $filename);
+
+            if (file_exists($fullPath)) {
+                $imageData = file_get_contents($fullPath);
+                $base64    = base64_encode($imageData);
+                $mime      = mime_content_type($fullPath);
+                $imagenBase64 = "data:{$mime};base64,{$base64}";
+            }
+        }
+
+        $productos[] = [
+            'nombre'     => $producto->nombre ?? 'N/A',
+            'referencia' => $producto->referencia_producto
+                ? $producto->referencia_producto->codigo . ' - ' . $producto->referencia_producto->color . ' (' . $producto->referencia_producto->tamano . ')'
+                : 'N/A',
+            'cantidad'   => $elemento->cantidad,
+            'precio'     => number_format($elemento->price * $elemento->cantidad, 2, '.', ','),
+            'imagen'     => $imagenBase64,
+        ];
+    }
+
+    return view('factura_pdf', [
+        'nombre'     => $factura->usuario->nombres . ' ' . $factura->usuario->apellidos,
+        'email'      => $factura->usuario->correo,
+        'telefono'   => $factura->usuario->telefono,
+        'fecha'      => \Carbon\Carbon::parse($factura->created_at)->format('d/m/Y H:i'),
+        'factura_id' => $factura->id_factura_pedido,
+        'mp_id'      => $factura->mp_id,
+        'status'     => $factura->status,
+        'productos'  => $productos,
+        'subtotal'   => number_format($factura->neto, 2, '.', ','),
+        'descuento'  => number_format($factura->descuento, 2, '.', ','),
+        'total'      => number_format($factura->neto - $factura->descuento, 2, '.', ','),
+    ]);
+});
