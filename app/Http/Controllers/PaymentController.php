@@ -7,6 +7,7 @@ use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Exceptions\MPApiException;
 use MercadoPago\MercadoPagoConfig;
 use App\Models\FacturaPedidos;
+use App\Models\TarjetasRegalo;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -30,28 +31,100 @@ class PaymentController extends Controller
         $total = (float)$factura->neto;
         $descuento = (float)$factura->descuento;
         
-        $totalFinal = $total - $descuento;
+        $totalFinal = max(0, $total - $descuento);
+
+        if($totalFinal == 0){
+
+            $factura->status = "paid";
+
+            $id_tarjeta = $factura->id_tarjeta;
+
+            $tarjeta = TarjetasRegalo::find($id_tarjeta);
+            $tarjeta->estado = 'usada';
+
+            $tarjeta->update();
+            $factura->update();
+
+            return response()->json([
+                'successZeroPay' => 'Factura pago 0',
+                "factura" => $request->invoice_id
+            ], 200);
+
+        }else{
+            $items = [
+                [
+                    "title" => "Pago de factura #" . $factura->id_factura_pedido . " Sweet Glow",
+                    "quantity" => 1,
+                    "unit_price" => round($totalFinal, 2)
+                ]
+            ];
+
+            try {
+                $preference = $client->create([
+                    "items" => $items,
+                    "external_reference" => (string)$factura->id_factura_pedido,
+                    "back_urls" => [
+                        "success" => config('services.mp.return_url')."/success",
+                        "failure" => config('services.mp.return_url')."/failed",
+                        "pending" => config('services.mp.return_url')."/pending"
+                    ],
+                    "auto_return" => "approved",
+                    'metadata' => [
+                        'id_factura' => (string)$factura->id_factura_pedido
+                    ]
+                ]);
+
+                return response()->json([
+                    "init_point" => $preference->init_point
+                ]);
+
+            } catch (MPApiException $e) {
+
+                return response()->json([
+                    'error' => $e->getApiResponse()->getContent()
+                ], 500);
+            }
+        }
+    }
+
+    public function createGiftCardsPreference(Request $request)
+    {
+        MercadoPagoConfig::setAccessToken(config('services.mp.token'));
+
+        $client = new PreferenceClient();
+
+        $giftcard = TarjetasRegalo::findOrFail($request->giftcardID);
+
         
+        if ($giftcard->status === 'paid') {
+            return response()->json([
+                'error' => 'La tarjeta ya fue pagada'
+            ], 400);
+        }
+
+        
+        $total = (float)$giftcard->monto;
+
         $items = [
             [
-                "title" => "Pago de factura #" . $factura->id_factura_pedido . " Sweet Glow",
+                "title" => "Pago de tarjeta de regalo #" . $giftcard->id_tarjeta . " Sweet Glow",
                 "quantity" => 1,
-                "unit_price" => round($totalFinal, 2)
+                "unit_price" => round($total, 2)
             ]
         ];
 
         try {
             $preference = $client->create([
                 "items" => $items,
-                "external_reference" => (string)$factura->id_factura_pedido,
+                "external_reference" => (string)$giftcard->id_tarjeta,
                 "back_urls" => [
-                    "success" => config('services.mp.return_url')."/success",
-                    "failure" => config('services.mp.return_url')."/failure",
-                    "pending" => config('services.mp.return_url')."/pending"
+                    "success" => config('services.mp.return_url_giftcards')."/success",
+                    "failure" => config('services.mp.return_url_giftcards')."/failed",
+                    "pending" => config('services.mp.return_url_giftcards')."/pending"
                 ],
                 "auto_return" => "approved",
                 'metadata' => [
-                    'id_factura' => (string)$factura->id_factura_pedido
+                    'id_tarjeta' => (string)$giftcard->id_tarjeta
                 ]
             ]);
 
@@ -65,6 +138,29 @@ class PaymentController extends Controller
                 'error' => $e->getApiResponse()->getContent()
             ], 500);
         }
+    }
+
+    public function paid_giftcard(Request $request){
+        $id_tarjeta = $request->id_tarjeta;
+        $mp_id = $request->payment_id;
+        $mp_status = $request->mp_status;
+
+        $giftcard = TarjetasRegalo::findOrFail($id_tarjeta);
+
+        if($giftcard->status == "paid"){
+            return response()->json([
+                "Ya pagada"
+            ], 200);
+        }
+
+        $giftcard->mp_status = $mp_status;
+        $giftcard->mp_id = $mp_id;
+        $giftcard->status = "paid";
+        $giftcard->update();
+
+        return response()->json([
+            "success" => "Tarjeta de regalo actualizada con exito"
+        ], 200);
     }
 
 
@@ -133,4 +229,5 @@ class PaymentController extends Controller
             "status" => $payment->status
         ]);
     }
+
 }
