@@ -166,68 +166,75 @@ class PaymentController extends Controller
 
     public function verify(Request $request)
     {
-        $payment_id = $request->payment_id;
-        $id_factura = $request->factura;
+        try{
+            $payment_id = $request->payment_id;
+            $id_factura = $request->factura;
 
-        if(!$payment_id || !$id_factura){
-            return response()->json(['message' => 'Datos incompletos'], 400);
-        }
+            if(!$payment_id || !$id_factura){
+                return response()->json(['message' => 'Datos incompletos'], 400);
+            }
 
-        MercadoPagoConfig::setAccessToken(config('services.mp.token'));
+            MercadoPagoConfig::setAccessToken(config('services.mp.token'));
 
-        $client = new PaymentClient();
+            $client = new PaymentClient();
 
-        try {
-            $payment = $client->get($payment_id);
-        } catch (\Exception $e) {
+            try {
+                $payment = $client->get($payment_id);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Error consultando pago',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+
+            if(!$payment){
+                return response()->json(['message' => 'Pago no encontrado'], 404);
+            }
+
+            $factura = FacturaPedidos::find($id_factura);
+
+            if(!$factura){
+                return response()->json(['message' => 'Factura no encontrada'], 404);
+            }
+
+            
+            if($factura->status === "paid"){
+                return response()->json([
+                    "status" => "already_paid"
+                ]);
+            }
+
+            // estado real del pago
+            switch($payment->status){
+                case "approved":
+                    $factura->status = "paid";
+                    break;
+
+                case "pending":
+                case "in_process":
+                    $factura->status = "pending";
+                    break;
+
+                case "rejected":
+                case "cancelled":
+                    $factura->status = "failed";
+                    break;
+            }
+            
+            $factura->mp_status = $payment->status;
+            $factura->mp_id = $payment_id;
+
+            $factura->save();
+
             return response()->json([
-                'message' => 'Error consultando pago',
+                "status" => $payment->status
+            ]);
+        }catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al procesa solicitud',
                 'error' => $e->getMessage()
             ], 500);
         }
-
-        if(!$payment){
-            return response()->json(['message' => 'Pago no encontrado'], 404);
-        }
-
-        $factura = FacturaPedidos::find($id_factura);
-
-        if(!$factura){
-            return response()->json(['message' => 'Factura no encontrada'], 404);
-        }
-
-        
-        if($factura->status === "paid"){
-            return response()->json([
-                "status" => "already_paid"
-            ]);
-        }
-
-        // estado real del pago
-        switch($payment->status){
-            case "approved":
-                $factura->status = "paid";
-                break;
-
-            case "pending":
-            case "in_process":
-                $factura->status = "pending";
-                break;
-
-            case "rejected":
-            case "cancelled":
-                $factura->status = "failed";
-                break;
-        }
-        
-        $factura->mp_status = $payment->status;
-        $factura->mp_id = $payment_id;
-
-        $factura->save();
-
-        return response()->json([
-            "status" => $payment->status
-        ]);
     }
 
 }
