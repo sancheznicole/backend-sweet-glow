@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Premiados;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WinnerNotification;
+
 
 class PremiadosController extends Controller
 {
@@ -74,4 +77,7 @@ class PremiadosController extends Controller
 
         return response()->json(['message' => 'Premiado eliminado correctamente'], 200);
     }
+
+        
+
 }
