@@ -87,6 +87,82 @@ class PaymentController extends Controller
         }
     }
 
+    public function createGiftCardsPreference(Request $request)
+    {
+        MercadoPagoConfig::setAccessToken(config('services.mp.token'));
+
+        $client = new PreferenceClient();
+
+        $giftcard = TarjetasRegalo::findOrFail($request->giftcardID);
+
+        
+        if ($giftcard->status === 'paid') {
+            return response()->json([
+                'error' => 'La tarjeta ya fue pagada'
+            ], 400);
+        }
+
+        
+        $total = (float)$giftcard->monto;
+
+        $items = [
+            [
+                "title" => "Pago de tarjeta de regalo #" . $giftcard->id_tarjeta . " Sweet Glow",
+                "quantity" => 1,
+                "unit_price" => round($total, 2)
+            ]
+        ];
+
+        try {
+            $preference = $client->create([
+                "items" => $items,
+                "external_reference" => (string)$giftcard->id_tarjeta,
+                "back_urls" => [
+                    "success" => config('services.mp.return_url_giftcards')."/success",
+                    "failure" => config('services.mp.return_url_giftcards')."/failure",
+                    "pending" => config('services.mp.return_url_giftcards')."/pending"
+                ],
+                "auto_return" => "approved",
+                'metadata' => [
+                    'id_tarjeta' => (string)$giftcard->id_tarjeta
+                ]
+            ]);
+
+            return response()->json([
+                "init_point" => $preference->init_point
+            ]);
+
+        } catch (MPApiException $e) {
+
+            return response()->json([
+                'error' => $e->getApiResponse()->getContent()
+            ], 500);
+        }
+    }
+
+    public function paid_giftcard(Request $request){
+        $id_tarjeta = $request->id_tarjeta;
+        $mp_id = $request->payment_id;
+        $mp_status = $request->mp_status;
+
+        $giftcard = TarjetasRegalo::findOrFail($id_tarjeta);
+
+        if($giftcard->status == "paid"){
+            return response()->json([
+                "Ya pagada"
+            ], 200);
+        }
+
+        $giftcard->mp_status = $mp_status;
+        $giftcard->mp_id = $mp_id;
+        $giftcard->status = "paid";
+        $giftcard->update();
+
+        return response()->json([
+            "success" => "Tarjeta de regalo actualizada con exito"
+        ], 200);
+    }
+
 
     public function verify(Request $request)
     {
@@ -153,4 +229,5 @@ class PaymentController extends Controller
             "status" => $payment->status
         ]);
     }
+
 }
