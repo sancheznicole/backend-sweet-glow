@@ -17,6 +17,9 @@ return new class extends Migration
             $table->dateTime('fecha_creacion')->useCurrent()->nullable(false);
             $table->dateTime('fecha_expiracion')->nullable(false);
             $table->dateTime('fecha_de_uso')->nullable(false);
+            $table->string("status")->default("unpaid");
+            $table->string('mp_status')->nullable(true);
+            $table->string('mp_id')->nullable(true);
             $table->string('estado')->nullable(false);
             $table->unsignedBigInteger('id_usuario')->nullable(false);
             $table->foreign('id_usuario')->references('id_usuario')->on('usuarios')->onDelete('cascade');

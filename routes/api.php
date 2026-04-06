@@ -35,6 +35,7 @@ Route::apiResource('products', App\Http\Controllers\ProductosController::class);
 Route::apiResource('images', App\Http\Controllers\ImagenesController::class);
 Route::apiResource('premios', App\Http\Controllers\PremioController::class);
 Route::apiResource('premiados', App\Http\Controllers\PremiadosController::class);
+Route::post('gift_cards/paidGiftCard', [App\Http\Controllers\PaymentController::class, 'paid_giftcard']);
 Route::get('gift_cards/getOrSearch', [App\Http\Controllers\TarjetasRegaloController::class, 'getOrSearch']);
 Route::apiResource('gift_cards', App\Http\Controllers\TarjetasRegaloController::class);
 Route::post('gift_cards/{id}/usar', [App\Http\Controllers\TarjetasRegaloController::class, 'usar']);
@@ -51,8 +52,7 @@ Route::apiResource('reviews', App\Http\Controllers\ResenasController::class);
 Route::get('reviews/product/{id}', [App\Http\Controllers\ResenasController::class, 'getByProduct']);
 
 Route::post('/create-preference', [App\Http\Controllers\PaymentController::class, 'createPreference']);
-Route::post('/webhook/mercadopago', [App\Http\Controllers\WebhookController::class, 'handle']);
-
+Route::post('/create-giftcard-preference', [App\Http\Controllers\PaymentController::class, 'createGiftCardsPreference']);
 Route::post('/payment/verify', [App\Http\Controllers\PaymentController::class, 'verify']);
 Route::post('/emails/electronic-bill', [App\Http\Controllers\EmailsController::class, 'sendElectronicBill']);
 Route::get('/factura/{id}/pdf', [App\Http\Controllers\DownloadsController::class, 'downloadPDF']);

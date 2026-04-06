@@ -38,6 +38,7 @@ return [
     'mp' => [
         'token' => env('MP_ACCESS_TOKEN'),
         'return_url' => env('FRONT_URL_RETURN_MERCADOPAGO'),
+        'return_url_giftcards' => env('FRONT_URL_RETURN_MERCADOPAGO_GIFTCARDS'),
     ],
     'deploy' => [
         'url_storage' => env('URL_DESPLIEGUE_STORAGE'),
